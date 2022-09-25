@@ -8,13 +8,6 @@ public class YajilinSolver {
 
     public static void main(String[] args) {
         System.out.println("solve start");
-        // Field field = new Field(7, 7);
-        // field.Initialize7();
-        // field.ShowMasu();
-        // field.FillFixedValue();
-        // field.ShowMasu();
-        // field.ShowTate();
-        // field.ShowYoko();
 
         String url = "https://puzz.link/p?yajilin/10/10/b2241u1222e3131zf2031e1231u4011b";
 
@@ -25,14 +18,13 @@ public class YajilinSolver {
         url = "https://puzz.link/p?yajilin/6/6/21m41a31f20g1111c";
 
         // TLE
-        // url =
-        // "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
+        url = "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
         url = "https://puzz.link/p?yajilin/10/10/40h21l43a23a41d11l40b23c12l40b22c13l20b21b41i";
         url = "https://puzz.link/p?yajilin/10/10/20f25zzp11a10n15f"; // TLE
         // 1815875248667 nanotime;
-        // url = "https://puzz.link/p?yajilin/10/10/j11f32k10p41h33q41p14c14a14b31";
-        // url =
-        // "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
+        url = "https://puzz.link/p?yajilin/10/10/j11f32k10p41h33q41p14c14a14b31";
+        url = "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
+
         URLPerser parser = new URLPerser();
         Field field = parser.CreateFieldFromURL(url);
         field.ShowMasu();

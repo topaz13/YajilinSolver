@@ -2,6 +2,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.Locale.Category;
+
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
 
 import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory;
 
@@ -483,6 +486,8 @@ public class Field {
         int[] dj = { 0, 1, 0, -1 };
         Position pos;
 
+        FillByWall();
+
         // これがすごい面白い処理になっている
         while (!stack.isEmpty()) {
             cf = stack.pop();
@@ -506,6 +511,49 @@ public class Field {
                 }
                 continue;
             }
+            // 行かなければならない方向を探す。
+            int notWallCount = 0;
+            // 左側に移動する
+            int npi = cf.curret.i;
+            int npj = cf.curret.j - 1;
+            if (npj >= 0 && tateWalls[npi][npj + 1] == Wall.NotExist && !cf.map[npi][npj]) {
+                CheckField ncf = cf.Move(0, -1);
+                if (ncf != null) {
+                    stack.add(ncf);
+                    continue;
+                }
+            }
+
+            // 右側
+            npj = cf.curret.j + 1;
+            if (npj < width && tateWalls[npi][npj] == Wall.NotExist && !cf.map[npi][npj]) {
+                CheckField ncf = cf.Move(0, 1);
+                if (ncf != null) {
+                    stack.add(ncf);
+                    continue;
+                }
+            }
+            // 上側
+            npi = cf.curret.i - 1;
+            npj = cf.curret.j;
+            if (npi >= 0 && yokoWalls[npi + 1][npj] == Wall.NotExist && !cf.map[npi][npj]) {
+                CheckField ncf = cf.Move(-1, 0);
+                if (ncf != null) {
+                    stack.add(ncf);
+                    continue;
+                }
+            }
+
+            // 下側
+            npi = cf.curret.i + 1;
+            if (npi < height && yokoWalls[npi][npj] == Wall.NotExist && !cf.map[npi][npj]) {
+                CheckField ncf = cf.Move(1, 0);
+                if (ncf != null) {
+                    stack.add(ncf);
+                    continue;
+                }
+            }
+
             for (int i = 0; i < di.length; i++) {
                 CheckField next = cf.Move(di[i], dj[i]);
                 if (next != null)
@@ -584,16 +632,8 @@ public class Field {
         return masuArray;
     }
 
-    // 壁を作る
-    private void FillWall() {
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-
-            }
-        }
-    }
-
     // 壁によってマスを埋める
+    // 壁の生成も行う。
     private void FillByWall() {
         // System.out.println("Fill By Wall");
         for (int i = 0; i < height; i++) {
@@ -626,20 +666,34 @@ public class Field {
                     return;
                 }
 
+                if (masu[i][j] == Masu.NotBlack) {
+                    // 空白マスで壁が二つの場合。他は壁なしになる。
+                    if (wall == 2) {
+                        if (tateWalls[i][j] != Wall.Exist)
+                            tateWalls[i][j] = Wall.NotExist;
+
+                        if (tateWalls[i][j + 1] != Wall.Exist)
+                            tateWalls[i][j + 1] = Wall.NotExist;
+
+                        if (yokoWalls[i][j] != Wall.Exist)
+                            yokoWalls[i][j] = Wall.NotExist;
+
+                        if (yokoWalls[i + 1][j] != Wall.Exist)
+                            yokoWalls[i + 1][j] = Wall.NotExist;
+                    }
+                }
+
                 if (wall == 2 && path == 2) {
                     // パスと接続部分が NotBlackになる
                     if (tateWalls[i][j] == Wall.NotExist)
                         FillMasu(Masu.NotBlack, i, j - 1);
-                    // masu[i][j - 1] = Masu.NotBlack;
                     if (tateWalls[i][j + 1] == Wall.NotExist)
                         FillMasu(Masu.NotBlack, i, j + 1);
-                    // masu[i][j + 1] = Masu.NotBlack;
                     if (yokoWalls[i][j] == Wall.NotExist)
                         FillMasu(Masu.NotBlack, i - 1, j);
-                    // masu[i - 1][j] = Masu.NotBlack;
                     if (yokoWalls[i + 1][j] == Wall.NotExist)
                         FillMasu(Masu.NotBlack, i + 1, j);
-                    // masu[i + 1][j] = Masu.NotBlack;
+
                 }
 
                 if (path >= 3) {
