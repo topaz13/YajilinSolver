@@ -3,7 +3,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
+import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory;
+
 public class Field {
+
     public Masu[][] masu;
     public Arrow[][] arrows;
 
@@ -67,6 +70,68 @@ public class Field {
         arrows[5][2] = new Arrow(Direction.Left, 0);
     }
 
+    public void Initialize2() {
+        FillMasu(Masu.Arrow, 1, 2);
+        FillMasu(Masu.Arrow, 2, 5);
+        FillMasu(Masu.Arrow, 5, 0);
+        arrows[1][2] = new Arrow(Direction.Right, 0);
+        arrows[2][5] = new Arrow(Direction.Left, 3);
+        arrows[5][0] = new Arrow(Direction.Right, 0);
+    }
+
+    public void Initialize3() {
+        // https://puzz.link/p?yajilin/6/6/n42a41n31a32a33
+        FillMasu(Masu.Arrow, 2, 2);
+        FillMasu(Masu.Arrow, 2, 4);
+        FillMasu(Masu.Arrow, 5, 1);
+        FillMasu(Masu.Arrow, 5, 3);
+        FillMasu(Masu.Arrow, 5, 5);
+        arrows[2][2] = new Arrow(Direction.Right, 2);
+        arrows[2][4] = new Arrow(Direction.Right, 1);
+        arrows[5][1] = new Arrow(Direction.Left, 1);
+        arrows[5][3] = new Arrow(Direction.Left, 2);
+        arrows[5][5] = new Arrow(Direction.Left, 3);
+    }
+
+    public void Initialize4() {
+        // https://puzz.link/p?yajilin/6/6/h11a21o21b21f
+        FillArrow(1, 2, Direction.Up, 1);
+        FillArrow(1, 4, Direction.Down, 1);
+        FillArrow(4, 2, Direction.Down, 1);
+        FillArrow(4, 5, Direction.Down, 1);
+    }
+
+    public void Initialize5() {
+        // https://note.com/aoiatuage/n/nf27ef4fd49bd
+        this.height = 8;
+        this.width = 8;
+        FillArrow(1, 2, Direction.Up, 1);
+        FillArrow(2, 5, Direction.Down, 3);
+        FillArrow(4, 1, Direction.Left, 1);
+        FillArrow(7, 2, Direction.Left, 1);
+    }
+
+    public void Initialize6() {
+        // https://t-karino.sakura.ne.jp/puzzle/Yajil/YajiLinRule.html
+        FillArrow(0, 4, Direction.Left, 2);
+        FillArrow(3, 3, Direction.Left, 2);
+        FillArrow(5, 5, Direction.Up, 1);
+    }
+
+    public void Initialize7() {
+        // https://t-karino.sakura.ne.jp/puzzle/Yajil/YajiLinRule.html
+        FillArrow(1, 2, Direction.Up, 1);
+        FillArrow(1, 5, Direction.Left, 1);
+        FillArrow(4, 1, Direction.Up, 1);
+        FillArrow(4, 3, Direction.Right, 2);
+        FillArrow(6, 2, Direction.Left, 0);
+    }
+
+    public void FillArrow(int i, int j, Direction dir, int val) {
+        FillMasu(Masu.Arrow, i, j);
+        arrows[i][j] = new Arrow(dir, val);
+    }
+
     // ======================
     // public method
     // ======================
@@ -125,6 +190,8 @@ public class Field {
      */
     public void FillFixedValue() {
         // TODO: 決まる場所を置く
+        if (IsUnsolved)
+            return;
         FillByArrows();
         FillByWall();
     }
@@ -139,6 +206,11 @@ public class Field {
         // 全て埋まっている
         FillByWall();
 
+        FillByArrows();
+
+        if (IsUnsolved)
+            return false;
+
         // 未確定マスが存在したらクリアではない。
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -146,11 +218,12 @@ public class Field {
                     return false;
             }
         }
+
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-
                 // 矢印の方向の数が合っているかどうか確認
                 if (masu[i][j] == Masu.Arrow) {
+                    // 未確定はもうない
                     if (!CheckCorrectArrow(i, j)) {
                         return false;
                     }
@@ -169,7 +242,6 @@ public class Field {
         // 最終チェック一筆書きできるかどうか。。
         // 重いからあまり呼びたくないかも
         return CanDrawOnePath();
-        // return true;
     }
 
     /**
@@ -178,7 +250,11 @@ public class Field {
      * @return
      */
     public boolean HasAnswer() {
+        if (IsUnsolved)
+            return false;
+
         int cnt = 0;
+
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
                 if (masu[i][j] == Masu.UnDefined)
@@ -212,7 +288,7 @@ public class Field {
                         c = 'U';
                         break;
                     case Arrow:
-                        c = 'A';
+                        c = (arrows[i][j].value + "").charAt(0);
                         break;
                     case Black:
                         c = 'B';
@@ -279,79 +355,66 @@ public class Field {
     }
 
     private void FillByArrow(int i, int j) {
-        // System.out.println("Fill By Arrow (" + i + "," + j + ")");
         Arrow arrow = arrows[i][j];
-        if (arrow.direction == Direction.Down) {
-            for (int k = i + 1; k < height; k++) {
-                // TODO:処理を行う。
-                // Masu cell = masu[k][j];
+
+        // リスト
+        List<Masu[]> candss = GetCandidate(arrow, i, j);
+
+        // 見る方向
+        int di = 0;
+        int dj = 0;
+        switch (arrow.direction) {
+            case Down:
+                di = 1;
+                break;
+            case Up:
+                di = -1;
+                break;
+            case Right:
+                dj = 1;
+                break;
+            case Left:
+                dj = -1;
+                break;
+            default:
+                break;
+        }
+
+        Iterator<Masu[]> iter2 = candss.iterator();
+        while (iter2.hasNext()) {
+            Masu[] data = iter2.next();
+            boolean isValid = true;
+            for (int k = 0; k < data.length; k++) {
+                Masu target = masu[i + (di * (k + 1))][j + (dj * (k + 1))];
+                if (target == Masu.Black && data[k] != Masu.Black) {
+                    isValid = false;
+                    break;
+                }
+            }
+            if (!isValid)
+                iter2.remove();
+        }
+
+        if (candss.size() == 0) {
+            IsUnsolved = true;
+            return;
+        }
+        Masu[] fixed2 = candss.get(0);
+        for (int k = 0; k < candss.size(); k++) {
+            Masu[] data = candss.get(k);
+            for (int l = 0; l < data.length; l++) {
+                if (fixed2[l] != data[l])
+                    fixed2[l] = Masu.UnDefined;
+            }
+        }
+        for (int l = 0; l < fixed2.length; l++) {
+            if (fixed2[l] == Masu.Black) {
+                FillMasu(Masu.Black, i + (di * (l + 1)), j + (dj * (l + 1)));
+            } else if (fixed2[l] == Masu.NotBlack) {
+                FillMasu(Masu.NotBlack, i + (di * (l + 1)), j + (dj * (l + 1)));
             }
         }
 
-        if (arrow.direction == Direction.Up) {
-            for (int k = i - 1; k >= 0; k--) {
-                // TODO:処理を行う。
-                // Masu cell = masu[k][j];
-            }
-        }
-
-        if (arrow.direction == Direction.Right) {
-            // 処理を行う。
-            List<Masu[]> cands = GetCandidate(arrow, i, j);
-            if (cands.size() == 0)
-                return;
-            Iterator<Masu[]> iter = cands.iterator();
-            while (iter.hasNext()) {
-                Masu[] data = iter.next();
-                boolean isValid = true;
-                for (int k = 0; k < data.length; k++) {
-                    Masu target = masu[i][j + k + 1];
-                    if (target == Masu.Black && data[k] != Masu.Black) {
-                        isValid = false;
-                        break;
-                    }
-                }
-                if (!isValid)
-                    iter.remove();
-            }
-            if (cands.size() == 0)
-                return;
-            Masu[] fixed = cands.get(0);
-            for (int k = 0; k < cands.size(); k++) {
-                Masu[] data = cands.get(k);
-                for (int l = 0; l < data.length; l++) {
-                    if (fixed[l] != data[l])
-                        fixed[l] = Masu.UnDefined;
-                }
-            }
-            for (int l = 0; l < fixed.length; l++) {
-                if (fixed[l] == Masu.Black) {
-                    FillMasu(Masu.Black, i, j + l + 1);
-                } else if (fixed[l] == Masu.NotBlack) {
-                    FillMasu(Masu.NotBlack, i, j + l + 1);
-                }
-            }
-        }
-
-        if (arrow.direction == Direction.Left) {
-            // 処理を行う。
-            List<Masu[]> cands = GetCandidate(arrow, i, j);
-            if (cands.size() == 0)
-                return;
-            if (cands.size() == 1) {
-                // 結果を採用する
-                Masu[] cand = cands.get(0);
-                for (int l = 0; l < cand.length; l++) {
-
-                    if (cand[l] == Masu.Black) {
-                        FillMasu(Masu.Black, i, j - l - 1);
-                    } else {
-                        FillMasu(Masu.NotBlack, i, j - l - 1);
-                    }
-                }
-                return;
-            }
-        }
     }
 
     // 矢印の数だけ黒ますを置くことができるかどうか
@@ -361,10 +424,10 @@ public class Field {
         int diffJ = 0;
         switch (arrow.direction) {
             case Down:
-                diffI = -1;
+                diffI = 1;
                 break;
             case Up:
-                diffI = 1;
+                diffI = -1;
                 break;
             case Right:
                 diffJ = 1;
@@ -389,16 +452,16 @@ public class Field {
             cj += diffJ;
         }
         if (kuroCnt + undefinedCnt < arrow.value) {
-            // System.out.println("FAFAFAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
             return false;
         }
         return true;
     }
 
+    boolean debug = false;
+
+    // 一筆書きできるかどうかを試す。
     private boolean CanDrawOnePath() {
 
-        System.out.println("can draw one path");
-        ShowMasu();
         Position initialPosition = new Position(0, 0);
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
@@ -414,18 +477,30 @@ public class Field {
         Stack<CheckField> stack = new Stack<>();
         stack.add(cf);
 
+        FillByWall();
+
         int[] di = { 1, 0, -1, 0 };
         int[] dj = { 0, 1, 0, -1 };
         Position pos;
 
+        // これがすごい面白い処理になっている
         while (!stack.isEmpty()) {
             cf = stack.pop();
+            // System.out.println(stack.size());
+            // cf.Show();
+
+            if (cf.IsDiscrete()) {
+                // System.out.println("離れ島があります");
+                continue;
+            }
+
             pos = cf.GetLast();
             if (pos != null) {
                 for (int i = 0; i < di.length; i++) {
                     int ii = pos.i + di[i];
                     int jj = pos.j + dj[i];
                     if (ii == initialPosition.i && jj == initialPosition.j) {
+                        System.out.println("Succeed to draw onepath");
                         return true;
                     }
                 }
@@ -437,6 +512,7 @@ public class Field {
                     stack.add(next);
             }
         }
+
         return false;
     }
 
@@ -452,20 +528,49 @@ public class Field {
             length = i;
         if (dir == Direction.Down)
             length = height - i - 1;
+
         if (arrow.value == 0) {
+            // OK
             Masu[] cand = CreateMasuArray(length);
             list.add(cand);
-        } else if (arrow.value == 1) {
+            return list;
+        }
+        if (arrow.value == 1) {
+            // OK
             for (int k = 0; k < length; k++) {
                 Masu[] cand = CreateMasuArray(length);
                 cand[k] = Masu.Black;
                 list.add(cand);
             }
-        } else if (arrow.value == 2) {
+
+            return list;
+        }
+
+        for (int bit = 0; bit < (1 << length); bit++) {
+            Masu currentMasu = Masu.UnDefined;
             Masu[] cand = CreateMasuArray(length);
-            cand[0] = Masu.Black;
-            cand[2] = Masu.Black;
-            list.add(cand);
+            int blackCount = 0;
+            for (int k = 0; k < length; k++) {
+                if ((bit & (1 << k)) > 0) {
+                    // 黒ます
+                    if (currentMasu == Masu.Black) {
+                        // 連続黒マスは候補外
+                        blackCount = -1;
+                        break;
+                    }
+
+                    currentMasu = Masu.Black;
+                    blackCount++;
+                    cand[k] = Masu.Black;
+                } else {
+                    // 白ます
+                    currentMasu = Masu.NotBlack;
+                    cand[k] = Masu.NotBlack;
+                }
+            }
+            if (blackCount == arrow.value) {
+                list.add(cand);
+            }
         }
         return list;
     }
@@ -479,6 +584,16 @@ public class Field {
         return masuArray;
     }
 
+    // 壁を作る
+    private void FillWall() {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+
+            }
+        }
+    }
+
+    // 壁によってマスを埋める
     private void FillByWall() {
         // System.out.println("Fill By Wall");
         for (int i = 0; i < height; i++) {

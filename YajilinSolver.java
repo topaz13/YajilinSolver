@@ -3,28 +3,49 @@ import java.util.List;
 import java.util.Stack;
 
 public class YajilinSolver {
+
+    public static boolean debug = false;
+
     public static void main(String[] args) {
         System.out.println("solve start");
-        Field field = new Field(6, 6);
-        field.Initialize();
+        // Field field = new Field(7, 7);
+        // field.Initialize7();
+        // field.ShowMasu();
+        // field.FillFixedValue();
+        // field.ShowMasu();
+        // field.ShowTate();
+        // field.ShowYoko();
+
+        String url = "https://puzz.link/p?yajilin/10/10/b2241u1222e3131zf2031e1231u4011b";
+
+        // OK
+        url = "https://puzz.link/p?yajilin/6/6/c40c30f30f40f30a40e";
+        url = "https://puzz.link/p?yajilin/6/6/c40h10b41i40a10h";
+        url = "https://puzz.link/p?yajilin/6/6/g30f313131c101010c303030g";
+        url = "https://puzz.link/p?yajilin/6/6/21m41a31f20g1111c";
+
+        // TLE
+        // url =
+        // "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
+        url = "https://puzz.link/p?yajilin/10/10/40h21l43a23a41d11l40b23c12l40b22c13l20b21b41i";
+        url = "https://puzz.link/p?yajilin/10/10/20f25zzp11a10n15f"; // TLE
+        // 1815875248667 nanotime;
+        // url = "https://puzz.link/p?yajilin/10/10/j11f32k10p41h33q41p14c14a14b31";
+        // url =
+        // "https://puzz.link/p?yajilin/10/10/s11i11b12f1111e23b11e13c11c22e11i1121h11i11";
+        URLPerser parser = new URLPerser();
+        Field field = parser.CreateFieldFromURL(url);
         field.ShowMasu();
-        field.FillFixedValue();
         YajilinSolver solver = new YajilinSolver();
+        long t = System.nanoTime();
         List<Field> result = solver.Solve2(field);
-        System.out.println("show result");
-        for (Field testField : result) {
-            System.out.println(testField);
-        }
+        t = System.nanoTime() - t;
         System.out.println("Result : " + result.size());
         for (int i = 0; i < result.size(); i++) {
             Field f = result.get(i);
             f.ShowMasu();
-            if (i == 7) {
-                f.ShowTate();
-                f.ShowYoko();
-
-            }
         }
+        System.out.println(t);
     }
 
     public List<Field> results = new ArrayList<>();
@@ -58,7 +79,6 @@ public class YajilinSolver {
         } else {
             return;
         }
-        // return;
     }
 
     private List<Field> Solve2(Field field) {
@@ -70,6 +90,7 @@ public class YajilinSolver {
         while (!stack.isEmpty()) {
             Field currentField = stack.pop();
             Field kuro = currentField.Copy();
+            System.out.println(stack.size());
             kuro.Fill(Masu.Black);
             kuro.FillFixedValue();
             if (kuro.IsClear()) {
